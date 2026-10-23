@@ -41,7 +41,7 @@ jobs:
         run: |
           mkdir -p "$RUNNER_TEMP/payload"
           tar -czf "$RUNNER_TEMP/payload/${{ matrix.rid }}.tar.gz" -C "$RUNNER_TEMP/publish" .
-          template=$(find "$HOME/.nuget/packages/microsoft.netcore.app.host.${{ matrix.rid }}" -path '*/native/apphost' -type f | sort | tail -1)
+          template=$(find "$DOTNET_ROOT/packs" "$HOME/.nuget/packages" -path '*/runtimes/${{ matrix.rid }}/native/apphost' -type f | sort | tail -1)
           test -n "$template"
           cp "$template" "$RUNNER_TEMP/payload/apphost-template-${{ matrix.rid }}"
       - uses: actions/upload-artifact@v4
