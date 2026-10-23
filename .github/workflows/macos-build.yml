@@ -1,60 +1,121 @@
-name: Build macOS App
-
+name: Build universal Magic Monkei HATS DMG
 on:
   push:
     branches: [main]
+    paths: ['source/**', 'packaging/**', '.github/workflows/macos-build.yml', 'INSTALL.txt']
   workflow_dispatch:
-
+permissions:
+  contents: read
+concurrency:
+  group: macos-${{ github.ref }}
+  cancel-in-progress: false
 jobs:
-  build-macos:
-    name: Build ${{ matrix.arch }}
-    runs-on: ${{ matrix.runner }}
+  build:
+    name: Test and build ${{ matrix.rid }}
     strategy:
       fail-fast: false
       matrix:
         include:
-          - arch: x64
-            runner: macos-26-intel
-          - arch: arm64
-            runner: macos-26
-
+          - {runner: macos-15, rid: osx-arm64}
+          - {runner: macos-15-intel, rid: osx-x64}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 25
     steps:
-      - name: Check out code
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
         with:
-          python-version: "3.14"
-
-      - name: Install dependencies
+          dotnet-version: '10.0.x'
+      - name: Retain test fixtures in this build workspace
+        run: echo "HATS_TEST_ROOT=$RUNNER_TEMP/hats-tests" >> "$GITHUB_ENV"
+      - name: Test protections, rollback and Mac card checks
+        run: dotnet run --project source/Hats.Mac.Tests -c Release
+      - name: Render and check compact window
+        run: dotnet run --project source/Hats.Mac.Tests -c Release -- --render
+      - name: Compile self-contained native app
+        run: dotnet publish source/Hats.Mac -c Release -r '${{ matrix.rid }}' --self-contained true -o '${{ runner.temp }}/publish'
+      - name: Check native mount API and app startup
         run: |
-          python -m pip install --upgrade pip
-          python -m pip install -r requirements.txt
-
-      - name: Build app bundle
+          "$RUNNER_TEMP/publish/MagicMonkei.HATS" --native-smoke
+          "$RUNNER_TEMP/publish/MagicMonkei.HATS" --startup-check "$RUNNER_TEMP/hats-tests/native-startup.json"
+      - name: Preserve executable permissions in build payload
         run: |
-          pyinstaller --noconfirm --windowed --name HATS-Installer \
-            --icon app_icon.icns \
-            --add-data "app_icon.png:." \
-            --add-data "app_icon.icns:." \
-            --add-data "sdcard_icon.png:." \
-            --add-data "bmc_button.png:." \
-            hats_installer.py
-
-      - name: Create distributable archives
-        run: |
-          ditto -c -k --sequesterRsrc --keepParent dist/HATS-Installer.app HATS-Installer-${{ matrix.arch }}.zip
-          hdiutil create -volname "HATS Installer" -srcfolder dist/HATS-Installer.app -ov -format UDZO HATS-Installer-${{ matrix.arch }}.dmg
-
-      - name: Upload app zip
-        uses: actions/upload-artifact@v4
+          mkdir -p "$RUNNER_TEMP/payload"
+          tar -czf "$RUNNER_TEMP/payload/${{ matrix.rid }}.tar.gz" -C "$RUNNER_TEMP/publish" .
+          template=$(find "$HOME/.nuget/packages/microsoft.netcore.app.host.${{ matrix.rid }}" -path '*/native/apphost' -type f | sort | tail -1)
+          test -n "$template"
+          cp "$template" "$RUNNER_TEMP/payload/apphost-template-${{ matrix.rid }}"
+      - uses: actions/upload-artifact@v4
         with:
-          name: HATS-Installer-${{ matrix.arch }}-app
-          path: HATS-Installer-${{ matrix.arch }}.zip
-
-      - name: Upload DMG
-        uses: actions/upload-artifact@v4
+          name: runtime-${{ matrix.rid }}
+          path: ${{ runner.temp }}/payload/*
+          retention-days: 14
+      - uses: actions/upload-artifact@v4
+        if: always()
         with:
-          name: HATS-Installer-${{ matrix.arch }}-dmg
-          path: HATS-Installer-${{ matrix.arch }}.dmg
+          name: checks-${{ matrix.rid }}
+          path: |
+            ${{ runner.temp }}/hats-tests/*.png
+            ${{ runner.temp }}/hats-tests/*.json
+          retention-days: 30
+  package:
+    needs: build
+    runs-on: macos-15
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: runtime-*
+          merge-multiple: true
+          path: ${{ runner.temp }}/inputs
+      - run: python -m pip install ds_store==1.3.1
+      - name: Create universal app and real compressed DMG
+        run: python packaging/build-universal.py --inputs "$RUNNER_TEMP/inputs" --output "$RUNNER_TEMP/universal"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: universal-dmg-candidate
+          path: |
+            ${{ runner.temp }}/universal/Magic-Monkei-HATS-Universal.dmg
+            ${{ runner.temp }}/universal/SHA256.txt
+            ${{ runner.temp }}/universal/INSTALL.txt
+          retention-days: 14
+  verify:
+    needs: package
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [macos-15, macos-15-intel]
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: universal-dmg-candidate
+          path: ${{ runner.temp }}/dmg
+      - name: Launch exact DMG natively on this Mac
+        run: python3 packaging/verify-dmg.py "$RUNNER_TEMP/dmg/Magic-Monkei-HATS-Universal.dmg" "$RUNNER_TEMP/verified"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: packaged-startup-${{ matrix.runner }}
+          path: ${{ runner.temp }}/verified/startup.json
+          retention-days: 30
+  deliver:
+    needs: verify
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: universal-dmg-candidate
+          path: ready
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Magic-Monkei-HATS-Universal-macOS
+          path: ready/*
+          retention-days: 90

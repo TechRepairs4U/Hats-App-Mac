@@ -1,0 +1,25 @@
+Magic Monkei HATS for macOS uses the following open-source components:
+
+.NET runtime and SDK — .NET Foundation and contributors, MIT license.
+https://github.com/dotnet/runtime
+The distributed runtime contains LICENSE.txt and ThirdPartyNotices.txt.
+
+Avalonia, Fluent theme and Inter font integration — AvaloniaUI contributors, MIT license.
+https://github.com/AvaloniaUI/Avalonia
+
+SkiaSharp — Microsoft and contributors, MIT license; Skia — Google and contributors, BSD-style license.
+https://github.com/mono/SkiaSharp
+https://skia.googlesource.com/skia/
+
+HarfBuzzSharp — Microsoft and contributors, MIT license; HarfBuzz — HarfBuzz contributors, MIT-style license.
+https://github.com/mono/SkiaSharp
+https://github.com/harfbuzz/harfbuzz
+
+Inter — Rasmus Andersson and contributors, SIL Open Font License 1.1.
+https://github.com/rsms/inter
+
+The build-time ds_store helper is MIT licensed and is not bundled with the app.
+https://github.com/al45tair/ds_store
+
+Magic Monkei artwork is retained from the supplied Windows app assets.
+No B2 content, scan downloads, account credentials or game files are included.

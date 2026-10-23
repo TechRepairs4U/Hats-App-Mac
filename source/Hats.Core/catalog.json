@@ -1,0 +1,437 @@
+{
+  "names": [
+    [
+      "aio-switch-updater",
+      "All-in-One Switch Updater",
+      "AIO Switch Updater"
+    ],
+    [
+      "amiibo-generator",
+      "AmiiboGenerator"
+    ],
+    [
+      "battery-fix",
+      "Battery Desync Fix NX"
+    ],
+    [
+      "benchmark-toolbox",
+      "Benchmark Toolbox"
+    ],
+    [
+      "breeze",
+      "a game cheating tool",
+      "Breeze"
+    ],
+    [
+      "hbmenu",
+      "nx-hbmenu",
+      "Homebrew Menu"
+    ],
+    [
+      "ftpsrv",
+      "ftpsrv"
+    ],
+    [
+      "cyberfoil",
+      "CyberFoil"
+    ],
+    [
+      "daybreak",
+      "Daybreak"
+    ],
+    [
+      "dbi",
+      "DBI"
+    ],
+    [
+      "edizon",
+      "EdiZon",
+      "EdiZon SE"
+    ],
+    [
+      "goldleaf",
+      "Goldleaf"
+    ],
+    [
+      "haze",
+      "USB File Transfer",
+      "haze"
+    ],
+    [
+      "hekate-toolbox",
+      "Hekate Toolbox"
+    ],
+    [
+      "jksv",
+      "JKSV"
+    ],
+    [
+      "linkalho",
+      "Linkalho"
+    ],
+    [
+      "mm-hats",
+      "MM HATS INSTALLER"
+    ],
+    [
+      "moonlight",
+      "Moonlight",
+      "Moonlight-Switch"
+    ],
+    [
+      "nextendo",
+      "Prelude"
+    ],
+    [
+      "nxthemes",
+      "NXThemes Installer"
+    ],
+    [
+      "quick-reboot",
+      "Quick Reboot"
+    ],
+    [
+      "safe-reboot",
+      "Safe Reboot"
+    ],
+    [
+      "reboot-hekate",
+      "Reboot to Hekate"
+    ],
+    [
+      "reboot-payload",
+      "Reboot to Payload"
+    ],
+    [
+      "saltynx-tool",
+      "SaltyNX-Tool"
+    ],
+    [
+      "simple-mod-downloader",
+      "SimpleModDownloader"
+    ],
+    [
+      "simple-mod-manager",
+      "SimpleModManager"
+    ],
+    [
+      "sphaira",
+      "sphaira"
+    ],
+    [
+      "90dns-tester",
+      "90DNS Testing Utility"
+    ],
+    [
+      "sys-clk-manager",
+      "sys-clk-manager",
+      "sys-clk manager"
+    ],
+    [
+      "sys-con",
+      "sys-con"
+    ],
+    [
+      "tinfoil",
+      "Tinfoil Installer",
+      "Tinfoil"
+    ],
+    [
+      "tinwoo",
+      "TinWoo Installer"
+    ],
+    [
+      "ultrahand-reload",
+      "Ultrahand Reload"
+    ],
+    [
+      "dns-mitm-manager",
+      "DNS-MITM Manager"
+    ],
+    [
+      "emuiibo",
+      "emuiibo"
+    ],
+    [
+      "fpslocker",
+      "FPSLocker"
+    ],
+    [
+      "horizon-oc",
+      "Horizon OC"
+    ],
+    [
+      "ultrahand",
+      "Ultrahand"
+    ],
+    [
+      "sysmodules",
+      "Sysmodules"
+    ],
+    [
+      "quickntp",
+      "QuickNTP"
+    ],
+    [
+      "reversenx-rt",
+      "ReverseNX-RT"
+    ],
+    [
+      "status-monitor",
+      "Status Monitor"
+    ],
+    [
+      "sys-clk-overlay",
+      "sys-clk"
+    ],
+    [
+      "sys-patch",
+      "sys-patch"
+    ],
+    [
+      "sys-tune",
+      "sys-tune"
+    ]
+  ],
+  "authors": {
+    "aio-switch-updater": [
+      "HamletDuFromage"
+    ],
+    "amiibo-generator": [
+      "Slluxx"
+    ],
+    "battery-fix": [
+      "CTCaer"
+    ],
+    "benchmark-toolbox": [
+      "Horizon-OC"
+    ],
+    "breeze": [
+      "Tomvita"
+    ],
+    "hbmenu": [
+      "switchbrew"
+    ],
+    "ftpsrv": [
+      "TotalJustice"
+    ],
+    "cyberfoil": [
+      "luketanti"
+    ],
+    "daybreak": [
+      "Atmosphere-NX"
+    ],
+    "dbi": [
+      "-"
+    ],
+    "edizon": [
+      "Tomvita",
+      "WerWolv",
+      "WerWolv, proferabg, and ppkantorski"
+    ],
+    "goldleaf": [
+      "XorTroll"
+    ],
+    "haze": [
+      "Atmosphere-NX"
+    ],
+    "hekate-toolbox": [
+      "WerWolv, cathery"
+    ],
+    "jksv": [
+      "JK"
+    ],
+    "linkalho": [
+      "rrocha & Impeeza",
+      "rrocha"
+    ],
+    "mm-hats": [
+      "TechRepairs4U"
+    ],
+    "moonlight": [
+      "XITRIX"
+    ],
+    "nextendo": [
+      "Nextendo Network"
+    ],
+    "nxthemes": [
+      "exelix"
+    ],
+    "quick-reboot": [
+      "eradicatinglove",
+      "Unspecified Author"
+    ],
+    "safe-reboot": [
+      "kempa / dezem"
+    ],
+    "reboot-hekate": [
+      "Tomvita"
+    ],
+    "reboot-payload": [
+      "Atmosphere-NX"
+    ],
+    "saltynx-tool": [
+      "MasaGratoR"
+    ],
+    "simple-mod-downloader": [
+      "PoloNX"
+    ],
+    "simple-mod-manager": [
+      "Nadrino"
+    ],
+    "sphaira": [
+      "TotalJustice"
+    ],
+    "90dns-tester": [
+      "Nexrem"
+    ],
+    "sys-clk-manager": [
+      "RetroNX Team"
+    ],
+    "sys-con": [
+      "Unspecified Author"
+    ],
+    "tinfoil": [
+      "blawar"
+    ],
+    "tinwoo": [
+      "MrDude"
+    ],
+    "ultrahand-reload": [
+      "ppkantorski"
+    ],
+    "dns-mitm-manager": [
+      "Unspecified Author"
+    ],
+    "emuiibo": [
+      "Unspecified Author"
+    ],
+    "fpslocker": [
+      "Unspecified Author"
+    ],
+    "horizon-oc": [
+      "Unspecified Author"
+    ],
+    "ultrahand": [
+      "ppkantorski"
+    ],
+    "sysmodules": [
+      "Unspecified Author"
+    ],
+    "quickntp": [
+      "Unspecified Author"
+    ],
+    "reversenx-rt": [
+      "Unspecified Author"
+    ],
+    "status-monitor": [
+      "Unspecified Author"
+    ],
+    "sys-clk-overlay": [
+      "Unspecified Author"
+    ],
+    "sys-patch": [
+      "TotalJustice"
+    ],
+    "sys-tune": [
+      "Unspecified Author"
+    ]
+  },
+  "gameNames": [
+    "2ship",
+    "am2r",
+    "cavestory",
+    "devilutionx",
+    "dhewm3",
+    "diablo",
+    "doom",
+    "doom3",
+    "duke3d",
+    "eduke32",
+    "grandtheftautov",
+    "gta",
+    "gta3",
+    "gtanx",
+    "gtasa",
+    "gtav",
+    "gtavc",
+    "gzdoom",
+    "ionfury",
+    "nxengine",
+    "nxquake",
+    "openlara",
+    "openmw",
+    "ppsspp",
+    "prboom",
+    "quake",
+    "quake2",
+    "quake3",
+    "re3",
+    "relcs",
+    "resa",
+    "retroarch",
+    "revc",
+    "scummvm",
+    "shipofharkinian",
+    "sm64",
+    "soh",
+    "sonic1",
+    "sonic2",
+    "sonic3",
+    "sonicmania",
+    "srb2",
+    "supermario64",
+    "vkquake"
+  ],
+  "gameFiles": [
+    "2ship.o2r",
+    "am2r.apk",
+    "data.rsdk",
+    "data.rsdk.xmf",
+    "data.win",
+    "default.xex",
+    "diabdat.mpq",
+    "doom.wad",
+    "doom2.wad",
+    "duke3d.grp",
+    "game.droid",
+    "game.unx",
+    "gta.dat",
+    "gta3.dat",
+    "gta3.dir",
+    "gta3.img",
+    "gta5.exe",
+    "gta_vc.dat",
+    "heretic.wad",
+    "hexen.wad",
+    "mm.o2r",
+    "morrowind.esm",
+    "oot.otr",
+    "quake.rc",
+    "soh.otr"
+  ],
+  "modules": {
+    "00ff0000636c6bff": "sys-clk / hoc-clk",
+    "00ff0000b378d640": "SysFanControl",
+    "0100000000000352": "emuiibo",
+    "0100000000000f12": "Fizeau",
+    "010000000000bd00": "MissionControl",
+    "054e4f4558454000": "Noexes",
+    "4200000000000000": "sys-tune",
+    "420000000000000b": "sys-patch",
+    "420000000000000f": "sys-ftpd-10k",
+    "420000000000012b": "sys-ftp-breeze",
+    "4200000000003103": "NSParentalControl",
+    "420000000007e51a": "nx-ovlloader",
+    "420000000007e51b": "alternate nx-ovlloader",
+    "420000000052474d": "NX Region Manager",
+    "42000062616b6101": "sys-screenuploader",
+    "690000000000000d": "sys-con"
+  },
+  "defaults": [
+    "atmosphere/contents/0100B00B51230000",
+    "atmosphere/automatic_backups",
+    "switch/ports",
+    "switch/games"
+  ]
+}

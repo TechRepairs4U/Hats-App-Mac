@@ -14,3 +14,13 @@ dist/
 .Trashes/
 .fseventsd/
 .TemporaryItems/
+**/bin/
+**/obj/
+**/fixtures/
+artifacts/
+build/
+dist/
+.DS_Store
+*.dmg
+*.zip
+*.log

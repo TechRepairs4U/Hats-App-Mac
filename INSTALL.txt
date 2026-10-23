@@ -1,0 +1,34 @@
+MAGIC MONKEI HATS — macOS 2.2.0
+
+One app for Apple Silicon (M-series) and Intel Macs running macOS 14 or later.
+The .NET runtime is included. Python and .NET do not need to be installed.
+
+1. Open Magic-Monkei-HATS-Universal.dmg.
+2. Drag Magic Monkei HATS to Applications.
+3. Eject the disk image, then open the app from Applications.
+4. Connect an existing FAT32/exFAT SD card, choose it, and choose the HATS pack.
+5. Check the selected card and backup location before installing.
+
+This build is ad-hoc signed, not Apple Developer ID signed or notarized. If
+macOS blocks the app as an unidentified developer, use the per-app Open Anyway
+option in System Settings > Privacy & Security after trying to open it.
+Do not disable Gatekeeper or other system security settings.
+
+The app requires a working internet connection. It finds the latest stable
+release at TechRepairs4U/HATS and accepts changing ZIP names and release tags.
+It fetches and validates hats-exclusions.json from that repository's default
+branch immediately before backup and installation. There is no cached fallback.
+
+Protected paths are skipped during backup, deletion and copying. Automatic
+game/port recognition and HATS sysmodule rules are kept from the Windows app.
+The matching HATS apps and sysmodules can still update. Options contains extra
+protections, the live GitHub list, activity, backup location and log access.
+
+Backups: ~/Documents/Magic Monkei/HATS Backups (changeable in Options).
+Logs and downloaded packs: ~/Library/Application Support/MagicMonkeiHATS/.
+The exact exclusions used are saved in each backup. Logs and working files
+are retained. No Backblaze B2 access or credentials are included.
+
+Use Disk Utility separately if a card needs formatting. This app updates an
+existing card; it does not format disks. Always eject the SD card in Finder
+after a successful update before unplugging it.
