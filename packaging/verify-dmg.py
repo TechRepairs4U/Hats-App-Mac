@@ -18,7 +18,7 @@ run("/usr/bin/hdiutil", "attach", "-readonly", "-nobrowse", "-mountpoint", mount
 try:
     app = mount / "Magic Monkei HATS.app"
     binary = app / "Contents/MacOS/MagicMonkeiHATS"
-    run("/usr/bin/lipo", "-verify_arch", "arm64", "x86_64", binary)
+    run("/usr/bin/lipo", binary, "-verify_arch", "arm64", "x86_64")
     run("/usr/bin/codesign", "--verify", "--deep", "--strict", app)
     run(binary, "--native-smoke")
     report = args.reports.resolve() / "startup.json"

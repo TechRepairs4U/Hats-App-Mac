@@ -54,7 +54,7 @@ def build(inputs, output):
         hosts.append(host)
     run("/usr/bin/lipo", "-create", *hosts, "-output", macos / EXE)
     (macos / EXE).chmod(0o755)
-    run("/usr/bin/lipo", "-verify_arch", "arm64", "x86_64", macos / EXE)
+    run("/usr/bin/lipo", macos / EXE, "-verify_arch", "arm64", "x86_64")
     shutil.copy2(ROOT / "packaging/AppIcon.icns", resources / "AppIcon.icns")
     shutil.copy2(ROOT / "THIRD-PARTY-NOTICES.txt", resources / "THIRD-PARTY-NOTICES.txt")
     shutil.copytree(ROOT / "packaging/Licenses", resources / "Licenses")
