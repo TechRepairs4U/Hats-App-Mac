@@ -112,7 +112,7 @@ public sealed class MainWindow : Window
         PreviewLog("HATS Installer 2.3.0 started on macOS.");PreviewLog("SD card detected: SWITCH · FAT32 · 128 GB");PreviewLog("Latest HATS release loaded. Ready when you are.");
     }
     public void PreviewLog(string message){if(!PreviewMode)throw new InvalidOperationException();AppendLog(message);}
-    void Controls(){install.IsEnabled=!PreviewMode&&!busy&&!scanning&&!fetching&&!dialogOpen&&release!=null&&drives.SelectedItem is MacVolume&&packs.SelectedItem is PackAsset;drives.IsEnabled=packs.IsEnabled=options.IsEnabled=info.IsEnabled=!busy&&!dialogOpen;refreshDrive.IsEnabled=!busy&&!scanning&&!dialogOpen;refreshRelease.IsEnabled=!busy&&!fetching&&!dialogOpen;}
+    void Controls(){var locked=busy||dialogOpen||checkingUpdate;install.IsEnabled=!PreviewMode&&!locked&&!scanning&&!fetching&&release!=null&&drives.SelectedItem is MacVolume&&packs.SelectedItem is PackAsset;drives.IsEnabled=packs.IsEnabled=options.IsEnabled=info.IsEnabled=!locked;refreshDrive.IsEnabled=!locked&&!scanning;refreshRelease.IsEnabled=!locked&&!fetching;}
     void Ui(Action action){if(!closed)Dispatcher.UIThread.Post(()=>{if(!closed)action();});}
     void AppendLog(string message){logLines.Add($"{DateTime.Now:HH:mm:ss}  {message}");if(logLines.Count>150)logLines.RemoveRange(0,logLines.Count-150);logText.Text=string.Join('\n',logLines);followLog=true;}
     void Log(string message){try{AppSettings.Log(message);}catch(Exception e) when(e is IOException or UnauthorizedAccessException){}Ui(()=>AppendLog(message));}
@@ -163,7 +163,7 @@ public sealed class MainWindow : Window
     }
     async Task CheckUpdates(bool manual)
     {
-        if(checkingUpdate||busy||PreviewMode||dialogOpen)return;checkingUpdate=true;
+        if(checkingUpdate||busy||PreviewMode||dialogOpen)return;checkingUpdate=true;Controls();
         try
         {
             Log("Checking for app updates…");using var service=new AppUpdateService();var latest=await service.LatestAsync();if(closed)return;

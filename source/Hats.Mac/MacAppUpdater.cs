@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Security.Cryptography;
 using System.Xml;
 using System.Xml.Linq;
 using Hats.Core;
@@ -101,15 +102,16 @@ public static class MacAppUpdater
             throw new IOException("The staged update is not beside the installed app.");
         var previous=Path.Combine(Path.GetDirectoryName(installed)!,"Magic Monkei HATS.previous-"+Guid.NewGuid().ToString("N")[..8]+".app");
         var script=Path.Combine(work,"replace-app.sh");var log=Path.Combine(work,"update.log");
+        var identityHash=Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(Path.Combine(installed,"Contents/Info.plist")))).ToLowerInvariant();
         File.WriteAllText(script,ReplacementScript.Replace("\r\n","\n"));
         var start=new ProcessStartInfo("/bin/sh"){UseShellExecute=false,WorkingDirectory=work};
-        foreach(var arg in new[]{script,parentPid.ToString(System.Globalization.CultureInfo.InvariantCulture),installed,staged,previous,log,startupReport??""})start.ArgumentList.Add(arg);
+        foreach(var arg in new[]{script,parentPid.ToString(System.Globalization.CultureInfo.InvariantCulture),installed,staged,previous,log,startupReport??"",identityHash})start.ArgumentList.Add(arg);
         using var process=Process.Start(start)??throw new IOException("Could not start the app updater.");return log;
     }
     public const string ReplacementScript="""
         #!/bin/sh
         set -eu
-        parent="$1"; current="$2"; staged="$3"; previous="$4"; log="$5"; report="$6"
+        parent="$1"; current="$2"; staged="$3"; previous="$4"; log="$5"; report="$6"; expected="$7"
         exec >> "$log" 2>&1
         echo "Waiting for HATS to close."
         count=0
@@ -118,8 +120,8 @@ public static class MacAppUpdater
           if [ "$count" -gt 60 ]; then echo "ERROR: HATS did not close. The installed app was not changed."; exit 1; fi
           sleep 1
         done
-        [ -d "$current" ] && [ ! -L "$current" ] && [ -d "$staged" ] && [ ! -L "$staged" ] && [ ! -e "$previous" ]
-        /usr/bin/codesign --verify --deep --strict "$staged"
+        lock="$current.update-lock"
+        if ! /bin/mkdir "$lock"; then echo "ERROR: another app update is in progress. The installed app was not changed."; exit 1; fi
         moved=0; installed=0
         rollback() {
           if [ "$moved" = 1 ]; then
@@ -128,8 +130,15 @@ public static class MacAppUpdater
             /bin/mv "$previous" "$current"
             /usr/bin/open -n "$current" || true
           fi
+          /bin/rmdir "$lock"
         }
         trap rollback EXIT
+        if [ ! -d "$current" ] || [ -L "$current" ] || [ ! -d "$staged" ] || [ -L "$staged" ] || [ -e "$previous" ] || [ -L "$previous" ]; then
+          echo "ERROR: an app path changed. The installed app was not changed."; exit 1
+        fi
+        actual=$(/usr/bin/shasum -a 256 "$current/Contents/Info.plist")
+        if [ "${actual%% *}" != "$expected" ]; then echo "ERROR: the installed app changed. Check for updates again."; exit 1; fi
+        /usr/bin/codesign --verify --deep --strict "$staged"
         /bin/mv "$current" "$previous"
         moved=1
         /bin/mv "$staged" "$current"
@@ -140,6 +149,7 @@ public static class MacAppUpdater
           /usr/bin/open -n "$current"
         fi
         moved=0
+        /bin/rmdir "$lock"
         trap - EXIT
         echo "SUCCESS: updated app opened. Previous app: $previous"
         """;

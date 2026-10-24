@@ -22,12 +22,14 @@ static class MacUpdateTests
             var root=Path.Combine(Environment.GetEnvironmentVariable("HATS_TEST_ROOT")??Path.GetTempPath(),"update test ' " + Guid.NewGuid().ToString("N"));Directory.CreateDirectory(root);
             var current=Path.Combine(root,"Current.app");var staged=Path.Combine(root,"Staged.app");var previous=Path.Combine(root,"Previous.app");Directory.CreateDirectory(current);Directory.CreateDirectory(staged);
             File.WriteAllText(Path.Combine(current,"version"),"old");File.WriteAllText(Path.Combine(staged,"version"),"new");
+            Directory.CreateDirectory(Path.Combine(current,"Contents"));File.WriteAllText(Path.Combine(current,"Contents/Info.plist"),"old metadata");
+            var identityHash=Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes("old metadata"))).ToLowerInvariant();
             var launch=Path.Combine(root,"launch.sh");File.WriteAllText(launch,fail?"#!/bin/sh\nexit 1\n":"#!/bin/sh\nexit 0\n");
             MacAppUpdater.RunAsync("/bin/chmod",["+x",launch]).GetAwaiter().GetResult();
             string Quote(string value)=>"'"+value.Replace("'","'\"'\"'")+"'";
             // Substitute only external dependencies; execute the production transaction script.
             var script=Path.Combine(root,"replace.sh");File.WriteAllText(script,MacAppUpdater.ReplacementScript.Replace("/usr/bin/open",Quote(launch)).Replace("/usr/bin/codesign","/usr/bin/true").Replace("\r\n","\n"));
-            var args=new[]{script,"99999999",current,staged,previous,Path.Combine(root,"update.log"),""};
+            var args=new[]{script,"99999999",current,staged,previous,Path.Combine(root,"update.log"),"",identityHash};
             if(fail)Reject(()=>MacAppUpdater.RunAsync("/bin/sh",args).GetAwaiter().GetResult());else MacAppUpdater.RunAsync("/bin/sh",args).GetAwaiter().GetResult();
             Assert(File.ReadAllText(Path.Combine(current,"version"))==(fail?"old":"new"));
             if(fail)Assert(File.ReadAllText(Path.Combine(staged,"version"))=="new"&&!Directory.Exists(previous));
