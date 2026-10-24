@@ -1,4 +1,5 @@
 using Avalonia;
+using Avalonia.VisualTree;
 using Avalonia.Headless;
 using Avalonia.Threading;
 using Avalonia.Controls;
@@ -13,10 +14,26 @@ if(args.Contains("--render"))
 {
     AppBuilder.Configure<App>().UseSkia().WithInterFont().UseHeadless(new AvaloniaHeadlessPlatformOptions {UseHeadlessDrawing=false}).SetupWithoutStarting();
     var window=new MainWindow(preview:true);window.Show();Dispatcher.UIThread.RunJobs();
-    using var frame=window.CaptureRenderedFrame()??throw new Exception("No UI frame rendered.");
-    frame.Save(Path.Combine(output,"macos-preview.png"),Avalonia.Media.Imaging.PngBitmapEncoderOptions.Default);
-    if(window.WindowState!=WindowState.Normal||window.Width!=700||window.Height!=650)throw new Exception("Expected compact normal window.");
-    window.Close();Console.WriteLine("PASS compact UI render: "+Path.Combine(output,"macos-preview.png"));return 0;
+    if(window.WindowState!=WindowState.Normal||window.Width!=680||window.Height!=620)throw new Exception("Expected compact normal window.");
+    var scroll=window.GetVisualDescendants().OfType<ScrollViewer>().Single(x=>x.Name=="LogScroll");
+    var footer=window.GetVisualDescendants().OfType<Border>().Single(x=>x.Name=="Footer");
+    foreach(var size in new[]{(680,620),(500,480),(820,700)})
+    {
+        window.Width=size.Item1;window.Height=size.Item2;Dispatcher.UIThread.RunJobs();
+        using(var frame=window.CaptureRenderedFrame()??throw new Exception("No UI frame rendered."))frame.Save(Path.Combine(output,$"macos-preview-{size.Item1}x{size.Item2}.png"),Avalonia.Media.Imaging.PngBitmapEncoderOptions.Default);
+        if(scroll.Bounds.Height<65||footer.TranslatePoint(default,window)!.Value.Y+footer.Bounds.Height>window.Bounds.Height+1)throw new Exception("Log or footer does not fit.");
+        var install=window.GetVisualDescendants().OfType<Button>().Single(x=>x.Name=="InstallButton");var point=install.TranslatePoint(default,window)!.Value;
+        if(point.X<0||point.X+install.Bounds.Width>window.Bounds.Width||point.Y+install.Bounds.Height>window.Bounds.Height)throw new Exception("Install button clipped.");
+    }
+    window.Width=680;window.Height=620;
+    for(int i=0;i<170;i++)window.PreviewLog($"Example activity {i}: verifying downloaded files and preparing the backup.");
+    Dispatcher.UIThread.RunJobs();using(var frame=window.CaptureRenderedFrame()){}Dispatcher.UIThread.RunJobs();
+    scroll.ScrollToHome();window.PreviewLog("Latest activity: verification completed.");Dispatcher.UIThread.RunJobs();
+    using(var frame=window.CaptureRenderedFrame()!)frame.Save(Path.Combine(output,"macos-log-open.png"),Avalonia.Media.Imaging.PngBitmapEncoderOptions.Default);
+    Dispatcher.UIThread.RunJobs();
+    if(scroll.Offset.Y<scroll.Extent.Height-scroll.Viewport.Height-2)throw new Exception("Log did not follow the latest activity.");
+    if(window.GetVisualDescendants().OfType<SelectableTextBlock>().Single(x=>x.Name=="LogText").Text!.Split('\n').Length!=150)throw new Exception("Log history is not bounded.");
+    window.Close();Console.WriteLine("PASS compact UI at 680x620, 500x480 and 820x700; expanded log and automatic scrolling");return 0;
 }
 void Assert(bool condition,string message){if(!condition)throw new Exception(message);}
 void Rejected(Action action){try{action();}catch(Exception e) when(e is IOException or InvalidDataException){return;}throw new Exception("Expected rejection.");}
@@ -53,3 +70,4 @@ if(packArg>=0)
     Assert(plan.Sysmodules.Length==16,"Full protection list blocks sysmodules.");Console.WriteLine($"PASS all {paths.Length} scanned paths excluded from copy, backup and deletion");
 }
 return 0;
+

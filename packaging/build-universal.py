@@ -66,14 +66,15 @@ def build(inputs, output):
             "CFBundleExecutable": EXE,
             "CFBundleIconFile": "AppIcon.icns",
             "CFBundlePackageType": "APPL",
-            "CFBundleShortVersionString": "2.2.0",
-            "CFBundleVersion": "2.2.0",
+            "CFBundleShortVersionString": "2.3.0",
+            "CFBundleVersion": "2.3.0",
             "CFBundleSupportedPlatforms": ["MacOSX"],
             "LSMinimumSystemVersion": "14.0",
             "LSArchitecturePriority": ["arm64", "x86_64"],
             "NSHighResolutionCapable": True,
             "NSPrincipalClass": "NSApplication",
-            "NSDocumentsFolderUsageDescription": "HATS saves verified recovery backups in your chosen Documents folder.",
+            "NSDesktopFolderUsageDescription": "HATS saves verified recovery backups in Desktop/HATSBackups.",
+            "NSDocumentsFolderUsageDescription": "HATS saves verified recovery backups in your chosen folder.",
             "NSRemovableVolumesUsageDescription": "HATS updates the SD card you select while preserving your games, ports and mods.",
         }, file)
     # Ad-hoc signing ensures valid Apple Silicon code signatures. It is not Developer ID signing or notarization.
@@ -112,3 +113,4 @@ if __name__ == "__main__":
     parser.add_argument("--output", required=True, type=Path)
     args = parser.parse_args()
     build(args.inputs.resolve(), args.output.resolve())
+

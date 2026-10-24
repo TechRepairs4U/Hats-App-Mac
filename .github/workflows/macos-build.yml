@@ -3,6 +3,8 @@ on:
   push:
     branches: [main]
     paths: ['source/**', 'packaging/**', '.github/workflows/macos-build.yml', 'INSTALL.txt']
+  pull_request:
+    paths: ['source/**', 'packaging/**', '.github/workflows/macos-build.yml', 'INSTALL.txt']
   workflow_dispatch:
 permissions:
   contents: read
@@ -104,7 +106,9 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: packaged-startup-${{ matrix.runner }}
-          path: ${{ runner.temp }}/verified/startup.json
+          path: |
+            ${{ runner.temp }}/verified/startup.json
+            ${{ runner.temp }}/verified/update-check/update-validation.json
           retention-days: 30
   deliver:
     needs: verify
@@ -119,3 +123,4 @@ jobs:
           name: Magic-Monkei-HATS-Universal-macOS
           path: ready/*
           retention-days: 90
+

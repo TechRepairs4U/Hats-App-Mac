@@ -18,6 +18,9 @@ if (args.Contains("--check-exclusions"))
 
 var tests = new List<(string Name, Action Body)>();
 void Test(string name, Action body) => tests.Add((name, body));
+PathRegressionTests.Register(Test, args);
+AppUpdateTests.Register(Test, args);
+MacUpdateTests.Register(Test);
 void Assert(bool condition, string message = "Assertion failed") { if (!condition) throw new Exception(message); }
 void Throws(Action body) { try { body(); } catch { return; } throw new Exception("Expected a failure"); }
 void Write(string root, string path, string text = "data") { var p = Path.Combine(root, path); Directory.CreateDirectory(Path.GetDirectoryName(p)!); File.WriteAllText(p, text); }
@@ -255,3 +258,4 @@ sealed class InspectHttp(Func<HttpRequestMessage, HttpResponseMessage> response)
 {
     protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) => Task.FromResult(response(request));
 }
+

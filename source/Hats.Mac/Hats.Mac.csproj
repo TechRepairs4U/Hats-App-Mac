@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
  <PropertyGroup>
   <OutputType>WinExe</OutputType><TargetFramework>net10.0</TargetFramework>
-  <AssemblyName>MagicMonkei.HATS</AssemblyName><Version>2.2.0</Version>
+  <AssemblyName>MagicMonkei.HATS</AssemblyName><Version>2.3.0</Version>
   <ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable><TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   <PublishTrimmed>false</PublishTrimmed><PublishReadyToRun>false</PublishReadyToRun>
   <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
