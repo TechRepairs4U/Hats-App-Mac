@@ -1,0 +1,29 @@
+Publishing Mac app updates
+=========================
+
+Repository: https://github.com/TechRepairs4U/Hats-App-Mac
+Exact asset name: Magic-Monkei-HATS-Universal.dmg
+
+1. Set the same numeric version in source/Hats.Mac/Hats.Mac.csproj and
+   packaging/build-universal.py (CFBundleShortVersionString and CFBundleVersion).
+2. Run the universal Mac workflow. Both architecture builds, UI checks,
+   packaged startup checks and real update-staging checks must pass.
+3. Create a stable GitHub release with a matching v2.3.1 or macos-v2.3.1 tag.
+   Upload the verified universal DMG with the exact asset name above.
+   GitHub must provide its sha256 asset digest. Upload SHA256.txt as well.
+4. Only publish after reviewing the build. Drafts and prereleases are ignored.
+
+The updater selects the highest stable Mac app version across release pages.
+It ignores Windows and Switch-only assets and never uses the HATS pack feed.
+It checks HTTPS source, size, SHA-256, bundle identifier, release version,
+universal architectures and code signature before replacing the app.
+Cancellation leaves the installed app unchanged. The previous bundle remains
+alongside the app; failures during replacement/launch attempt rollback.
+
+For smooth public distribution, configure Apple Developer ID signing and
+notarization in the packaging workflow. Current builds remain ad-hoc signed;
+macOS can require per-app approval. Quarantine is preserved. No signing keys
+or credentials are included in the app or this source package.
+
+No release is published by the build workflow. Artifact creation and publishing
+are separate. An empty release feed is reported as no published Mac update.

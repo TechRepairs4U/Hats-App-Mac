@@ -1,10 +1,20 @@
-# Magic Monkei HATS for macOS
+# Magic Monkei HATS for macOS 2.3.0
 
 Compact C# desktop app for Apple Silicon and Intel Macs. One universal DMG contains one app with both native runtimes; macOS selects the correct architecture automatically. Requires macOS 14 or later. Python and .NET are bundled dependencies only where needed during development; users do not need either installed.
 
+
+Version 2.3.0 matches the compact Windows layout: a complete header logo,
+Options and Info beside Install HATS, and an always-open log that expands with
+the window and follows new entries after layout. Backups default to Desktop/HATSBackups.
+The removed Options screens stay removed; automatic data protection still runs.
+
+App updates are checked at startup and manually in Options. The Mac updater
+verifies the universal DMG, stages a signed bundle, preserves quarantine and
+keeps the previous app before restarting. See [PUBLISHING-UPDATES.txt](PUBLISHING-UPDATES.txt).
+This source package does not publish a release or change an SD card.
 ## Build on GitHub
 
-Open **Actions → Build universal Magic Monkei HATS DMG → Run workflow**. Pushes to `main` that change the app or build files also start a build.
+Open **Actions → Build universal Magic Monkei HATS DMG → Run workflow**. Pull requests and pushes to `main` that change the app or build files also start a build.
 
 The workflow tests and compiles on separate Apple Silicon and Intel Mac runners. It combines native app hosts into a universal executable, creates and verifies a real compressed DMG, and launches that exact packaged app on both Mac types. After every job passes, download **Magic-Monkei-HATS-Universal-macOS** from the run's artifacts. Extract the artifact ZIP to get `Magic-Monkei-HATS-Universal.dmg`, its checksum and installation notes.
 
@@ -49,3 +59,4 @@ The checked-in `protection-test-fixture.json` is test data only. The application
 - [Apple statfs mount structure](https://github.com/apple-oss-distributions/xnu/blob/main/bsd/sys/mount.h)
 
 See [THIRD-PARTY-NOTICES.txt](THIRD-PARTY-NOTICES.txt) for the frameworks used.
+

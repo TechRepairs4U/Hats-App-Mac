@@ -9,6 +9,18 @@ public static class Program
 {
     [STAThread] public static void Main(string[] args)
     {
+        if(args.Length==3 && args[0]=="--validate-update")
+        {
+            var work=Path.GetFullPath(args[2]);Directory.CreateDirectory(work);
+            var installed=Path.Combine(work,MacAppUpdater.BundleName);
+            if(Directory.Exists(installed))throw new IOException("Update test destination already exists.");
+            MacAppUpdater.RunAsync("/usr/bin/ditto",[MacAppUpdater.CurrentBundle(),installed]).GetAwaiter().GetResult();
+            var staged=MacAppUpdater.PrepareAsync(Path.GetFullPath(args[1]),installed,MainWindow.CurrentVersion).GetAwaiter().GetResult();
+            var quarantine=MacAppUpdater.RunAsync("/usr/bin/xattr",["-p","com.apple.quarantine",staged]).GetAwaiter().GetResult();
+            if(!quarantine.Contains("MagicMonkeiHATS"))throw new IOException("Update quarantine was not preserved.");
+            File.WriteAllText(Path.Combine(work,"update-validation.json"),System.Text.Json.JsonSerializer.Serialize(new{validated=true,architecture=System.Runtime.InteropServices.RuntimeInformation.ProcessArchitecture.ToString(),quarantine_preserved=true,installed_app_replaced=false,sd_accessed=false}));
+            return;
+        }
         if(args.Length==1 && args[0]=="--native-smoke")
         {
             var mount=Hats.Core.MacVolumeGuard.Read("/");
