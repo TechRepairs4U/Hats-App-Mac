@@ -12,21 +12,22 @@ jobs:
       fail-fast: false
       matrix:
         runner: [macos-26-intel]
-        downloaded: [true]
+        downloaded: [false, true]
+        release: [macos-v2.3.0]
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-      - name: Download the published 2.3.1 DMG
+      - name: Download the previous published DMG
         run: |
-          curl --fail --location --output "$RUNNER_TEMP/HATS.dmg" https://github.com/TechRepairs4U/Hats-App-Mac/releases/download/macos-v2.3.1/Magic-Monkei-HATS-Universal.dmg
-          echo "4e2cec1414d2422715c1e7f547b4a3a31cbb65ddc3dc2cb5da82d82f4436fb35  $RUNNER_TEMP/HATS.dmg" | shasum -a 256 -c -
+          curl --fail --location --output "$RUNNER_TEMP/HATS.dmg" https://github.com/TechRepairs4U/Hats-App-Mac/releases/download/${{ matrix.release }}/Magic-Monkei-HATS-Universal.dmg
+          echo "eaa04f8ef0fedbf41fb53c1ac8da762be523c12bfbe77ae7f5fc0784de2d6e5d  $RUNNER_TEMP/HATS.dmg" | shasum -a 256 -c -
       - name: Open mounted and installed app through LaunchServices
-        run: python3 packaging/check-finder-launch.py "$RUNNER_TEMP/HATS.dmg" "$RUNNER_TEMP/launch-reports" --downloaded --local-copy-recovery
+        run: python3 packaging/check-finder-launch.py "$RUNNER_TEMP/HATS.dmg" "$RUNNER_TEMP/launch-reports" ${{ matrix.downloaded && '--downloaded --local-copy-recovery' || '' }}
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: finder-launch-${{ matrix.runner }}-downloaded-${{ matrix.downloaded }}
+          name: finder-launch-${{ matrix.release }}-${{ matrix.runner }}-downloaded-${{ matrix.downloaded }}
           path: |
             ${{ runner.temp }}/launch-reports/*.json
             ${{ runner.temp }}/launch-reports/*.log
