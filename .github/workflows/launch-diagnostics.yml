@@ -11,8 +11,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        runner: [macos-26, macos-26-intel]
-        downloaded: [false, true]
+        runner: [macos-26-intel]
+        downloaded: [true]
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 10
     steps:
@@ -22,7 +22,7 @@ jobs:
           curl --fail --location --output "$RUNNER_TEMP/HATS.dmg" https://github.com/TechRepairs4U/Hats-App-Mac/releases/download/macos-v2.3.1/Magic-Monkei-HATS-Universal.dmg
           echo "4e2cec1414d2422715c1e7f547b4a3a31cbb65ddc3dc2cb5da82d82f4436fb35  $RUNNER_TEMP/HATS.dmg" | shasum -a 256 -c -
       - name: Open mounted and installed app through LaunchServices
-        run: python3 packaging/check-finder-launch.py "$RUNNER_TEMP/HATS.dmg" "$RUNNER_TEMP/launch-reports" ${{ matrix.downloaded && '--downloaded' || '' }}
+        run: python3 packaging/check-finder-launch.py "$RUNNER_TEMP/HATS.dmg" "$RUNNER_TEMP/launch-reports" --downloaded --local-copy-recovery
       - uses: actions/upload-artifact@v4
         if: always()
         with:

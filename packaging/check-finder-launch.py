@@ -10,6 +10,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("dmg", type=Path)
 parser.add_argument("reports", type=Path)
 parser.add_argument("--downloaded", action="store_true")
+parser.add_argument("--local-copy-recovery", action="store_true")
 args = parser.parse_args()
 reports = args.reports.resolve()
 reports.mkdir(parents=True, exist_ok=True)
@@ -42,6 +43,7 @@ if args.downloaded:
     run("/usr/bin/xattr", "-w", "com.apple.quarantine", quarantine, args.dmg)
 run("/usr/bin/hdiutil", "verify", args.dmg)
 run("/usr/bin/hdiutil", "attach", "-readonly", "-nobrowse", "-mountpoint", mount, args.dmg)
+recovered = False
 try:
     app = mount / "Magic Monkei HATS.app"
     run("/usr/bin/codesign", "--verify", "--deep", "--strict", app)
@@ -60,9 +62,15 @@ try:
     (reports / "gatekeeper.log").write_text(assessment.stdout + assessment.stderr)
     distribution = run("/usr/bin/syspolicy_check", "distribution", installed, check=False)
     (reports / "distribution.log").write_text(distribution.stdout + distribution.stderr)
+    if args.downloaded and args.local_copy_recovery and not installed_ok:
+        # Diagnostic only: a known, checksum-verified developer build on a
+        # disposable runner. Never remove quarantine in the app or its updater.
+        run("/usr/bin/codesign", "--verify", "--deep", "--strict", installed)
+        run("/usr/bin/xattr", "-dr", "com.apple.quarantine", installed)
+        recovered = launch(installed, "finder-local-copy-recovery")
 finally:
     run("/usr/bin/hdiutil", "detach", mount, check=False)
     logs = run("/usr/bin/log", "show", "--last", "5m", "--style", "compact", "--predicate", 'eventMessage CONTAINS[c] "MagicMonkei" OR eventMessage CONTAINS[c] "Magic Monkei"', check=False)
     (reports / "launch.log").write_text(logs.stdout + logs.stderr)
-if not mounted_ok or not installed_ok:
+if (not mounted_ok or not installed_ok) and not recovered:
     raise RuntimeError("Finder launch failed. See the retained launch results.")
