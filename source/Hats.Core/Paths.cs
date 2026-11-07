@@ -28,9 +28,12 @@ public static class Paths
     public static string Checked(string root, string relative)
     {
         ValidateRelative(relative);
-        root = Path.GetFullPath(root);
+        root = Path.TrimEndingDirectorySeparator(Path.GetFullPath(root));
         var path = Path.GetFullPath(Path.Combine(root, relative.Replace('/', Path.DirectorySeparatorChar)));
-        if (!path.StartsWith(Path.TrimEndingDirectorySeparator(root) + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase)) throw new IOException("A path leaves the selected folder.");
+        // Filesystem roots already retain their separator (for example D:\ or /).
+        // Add one only for ordinary folders so valid drive-root children stay inside.
+        var prefix = Path.EndsInDirectorySeparator(root) ? root : root + Path.DirectorySeparatorChar;
+        if (!path.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)) throw new IOException("A path leaves the selected folder.");
         for (var p = path; !p.Equals(root, StringComparison.OrdinalIgnoreCase); p = Path.GetDirectoryName(p)!)
             if (Linked(p)) throw new IOException($"Linked paths cannot be updated: {relative}");
         if (Linked(root)) throw new IOException("The selected root is a linked folder.");

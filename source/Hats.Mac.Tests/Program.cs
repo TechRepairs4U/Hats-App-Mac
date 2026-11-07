@@ -1,4 +1,5 @@
 using Avalonia;
+using Avalonia.VisualTree;
 using Avalonia.Headless;
 using Avalonia.Threading;
 using Avalonia.Controls;
@@ -13,24 +14,48 @@ if(args.Contains("--render"))
 {
     AppBuilder.Configure<App>().UseSkia().WithInterFont().UseHeadless(new AvaloniaHeadlessPlatformOptions {UseHeadlessDrawing=false}).SetupWithoutStarting();
     var window=new MainWindow(preview:true);window.Show();Dispatcher.UIThread.RunJobs();
-    using var frame=window.CaptureRenderedFrame()??throw new Exception("No UI frame rendered.");
-    frame.Save(Path.Combine(output,"macos-preview.png"),Avalonia.Media.Imaging.PngBitmapEncoderOptions.Default);
-    if(window.WindowState!=WindowState.Normal||window.Width!=700||window.Height!=650)throw new Exception("Expected compact normal window.");
-    window.Close();Console.WriteLine("PASS compact UI render: "+Path.Combine(output,"macos-preview.png"));return 0;
+    if(window.WindowState!=WindowState.Normal||window.Width!=680||window.Height!=620)throw new Exception("Expected compact normal window.");
+    var scroll=window.GetVisualDescendants().OfType<ScrollViewer>().Single(x=>x.Name=="LogScroll");
+    var footer=window.GetVisualDescendants().OfType<Border>().Single(x=>x.Name=="Footer");
+    foreach(var size in new[]{(680,620),(500,480),(820,700)})
+    {
+        window.Width=size.Item1;window.Height=size.Item2;Dispatcher.UIThread.RunJobs();
+        using(var frame=window.CaptureRenderedFrame()??throw new Exception("No UI frame rendered."))frame.Save(Path.Combine(output,$"macos-preview-{size.Item1}x{size.Item2}.png"),Avalonia.Media.Imaging.PngBitmapEncoderOptions.Default);
+        if(scroll.Bounds.Height<65||footer.TranslatePoint(default,window)!.Value.Y+footer.Bounds.Height>window.Bounds.Height+1)throw new Exception("Log or footer does not fit.");
+        var install=window.GetVisualDescendants().OfType<Button>().Single(x=>x.Name=="InstallButton");var point=install.TranslatePoint(default,window)!.Value;
+        if(point.X<0||point.X+install.Bounds.Width>window.Bounds.Width||point.Y+install.Bounds.Height>window.Bounds.Height)throw new Exception("Install button clipped.");
+    }
+    window.Width=680;window.Height=620;
+    for(int i=0;i<170;i++)window.PreviewLog($"Example activity {i}: verifying downloaded files and preparing the backup.");
+    Dispatcher.UIThread.RunJobs();using(var frame=window.CaptureRenderedFrame()){}Dispatcher.UIThread.RunJobs();
+    scroll.ScrollToHome();window.PreviewLog("Latest activity: verification completed.");Dispatcher.UIThread.RunJobs();
+    using(var frame=window.CaptureRenderedFrame()!)frame.Save(Path.Combine(output,"macos-log-open.png"),Avalonia.Media.Imaging.PngBitmapEncoderOptions.Default);
+    Dispatcher.UIThread.RunJobs();
+    if(scroll.Offset.Y<scroll.Extent.Height-scroll.Viewport.Height-2)throw new Exception("Log did not follow the latest activity.");
+    if(window.GetVisualDescendants().OfType<SelectableTextBlock>().Single(x=>x.Name=="LogText").Text!.Split('\n').Length!=150)throw new Exception("Log history is not bounded.");
+    window.Close();Console.WriteLine("PASS compact UI at 680x620, 500x480 and 820x700; expanded log and automatic scrolling");return 0;
 }
 void Assert(bool condition,string message){if(!condition)throw new Exception(message);}
 void Rejected(Action action){try{action();}catch(Exception e) when(e is IOException or InvalidDataException){return;}throw new Exception("Expected rejection.");}
 string Plist(string? changed=null,object? replacement=null)
 {
-    var fields=new Dictionary<string,object>{{"MountPoint","/Volumes/SWITCH"},{"DeviceIdentifier","disk4s1"},{"VolumeUUID","CARD-1234"},{"FilesystemType","msdos"},{"FileSystemPersonality","MS-DOS FAT32"},{"VirtualOrPhysical","Physical"},{"Internal",false},{"RemovableMedia",true},{"ReadOnlyVolume",false},{"ReadOnlyMedia",false},{"TotalSize",128L<<30},{"VolumeFreeSpace",76L<<30},{"VolumeName","SWITCH"}};
+    var fields=new Dictionary<string,object>{{"MountPoint","/Volumes/SWITCH"},{"DeviceIdentifier","disk4s1"},{"DiskUUID","CARD-1234"},{"FilesystemType","msdos"},{"FilesystemName","MS-DOS FAT32"},{"Internal",false},{"RemovableMedia",true},{"WritableVolume",true},{"WritableMedia",true},{"TotalSize",128L<<30},{"FreeSpace",76L<<30},{"VolumeName","SWITCH"}};
     if(changed!=null){if(replacement==null)fields.Remove(changed);else fields[changed]=replacement;}
     return new XElement("plist",new XElement("dict",fields.SelectMany(p=>new[]{new XElement("key",p.Key),p.Value is bool b?new XElement(b?"true":"false"):p.Value is long l?new XElement("integer",l):new XElement("string",p.Value)}))).ToString();
 }
 var volume=MacVolumes.Parse(Plist());Assert(volume.Root=="/Volumes/SWITCH"&&volume.FreeBytes==76L<<30,"FAT32 card parse failed.");
-foreach(var pair in new (string Key,object? Value)[]{("MountPoint","/"),("MountPoint","/Volumes/SWITCH/switch"),("ReadOnlyMedia",true),("ReadOnlyVolume",true),("ReadOnlyVolume",null),("FilesystemType","apfs"),("VolumeUUID",null),("VirtualOrPhysical","Virtual"),("DeviceIdentifier","disk;bad"),("FileSystemPersonality","MS-DOS FAT16")})Rejected(()=>MacVolumes.Parse(Plist(pair.Key,pair.Value)));
+foreach(var pair in new (string Key,object? Value)[]{("MountPoint","/"),("MountPoint","/Volumes/SWITCH/switch"),("WritableMedia",false),("WritableVolume",false),("WritableVolume",null),("FilesystemType","apfs"),("DeviceIdentifier","disk;bad"),("FilesystemName","MS-DOS FAT16"),("FreeSpace",null)})Rejected(()=>MacVolumes.Parse(Plist(pair.Key,pair.Value)));
+Assert(MacVolumes.Parse(Plist("DiskUUID",null)).Uuid=="","An MBR card without a UUID should be selectable with mount identity checks.");
+Assert(MacVolumes.Parse(Plist("FilesystemType","exfat")).FileSystem=="exfat","exFAT card parse failed.");
+foreach(var pair in new (string Key,object Value)[]{("VirtualOrPhysical","Virtual"),("SystemImage",true),("BusProtocol","Disk Image")})
+{
+    var diskImage=XDocument.Parse(Plist());diskImage.Element("plist")!.Element("dict")!.Add(new XElement("key",pair.Key),pair.Value is bool b?new XElement(b?"true":"false"):new XElement("string",pair.Value));
+    Rejected(()=>MacVolumes.Parse(diskImage.ToString()));
+}
 // Generate an explicit internal/non-removable fixture without relying on whitespace.
 var internalDoc=XDocument.Parse(Plist("Internal",true));var removable=internalDoc.Descendants("key").Single(k=>k.Value=="RemovableMedia");removable.NextNode!.ReplaceWith(new XElement("false"));Rejected(()=>MacVolumes.Parse(internalDoc.ToString()));
 Rejected(()=>MacVolumes.SameCard(volume,volume with{Uuid="different"}));Rejected(()=>MacVolumes.SameCard(volume,volume with{Device="disk5s1"}));
+Rejected(()=>MacVolumes.SameCard(volume with{MountFsid=12},volume with{MountFsid=13}));
 var bytes=new byte[2168];BitConverter.GetBytes(12345678L).CopyTo(bytes,48);BitConverter.GetBytes((uint)0x1000).CopyTo(bytes,64);Encoding.UTF8.GetBytes("msdos").CopyTo(bytes,72);Encoding.UTF8.GetBytes("/Volumes/SWITCH").CopyTo(bytes,88);Encoding.UTF8.GetBytes("/dev/disk4s1").CopyTo(bytes,1112);
 var identity=MountIdentity.Decode(bytes);Assert(identity.Device=="/dev/disk4s1"&&identity.Fsid==12345678L,"Darwin statfs64 decoding failed.");identity.EnsureSame(identity);Rejected(()=>identity.EnsureSame(identity with{Fsid=88}));Rejected(()=>identity.EnsureSame(identity with{Flags=1}));Rejected(()=>identity.EnsureSame(identity with{Mount="/"}));
 if(OperatingSystem.IsMacOS()){var root=MacVolumeGuard.Read("/");Assert(root.Mount=="/"&&root.FileSystem.Length>0,"Native macOS mount ABI failed.");Console.WriteLine("PASS native macOS mount read (no SD writes)");}
@@ -53,3 +78,4 @@ if(packArg>=0)
     Assert(plan.Sysmodules.Length==16,"Full protection list blocks sysmodules.");Console.WriteLine($"PASS all {paths.Length} scanned paths excluded from copy, backup and deletion");
 }
 return 0;
+

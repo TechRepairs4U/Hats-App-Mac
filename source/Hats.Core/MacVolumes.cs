@@ -9,6 +9,7 @@ namespace Hats.Core;
 
 public sealed record MacVolume(string Root, string Name, string Device, string Uuid, string FileSystem, long TotalBytes, long FreeBytes)
 {
+    public long? MountFsid { get; init; }
     public override string ToString() => $"{Name}  ·  {TotalBytes / 1073741824d:N0} GB  ·  {(FileSystem == "msdos" ? "FAT32" : "exFAT")}";
 }
 
@@ -28,16 +29,16 @@ public static class MacVolumes
         long Number(string name) => fields.TryGetValue(name, out var value) && value.Name == "integer" && long.TryParse(value.Value, out var number) ? number : 0;
         var mount = Text("MountPoint"); var device = Text("DeviceIdentifier"); var fs = Text("FilesystemType").ToLowerInvariant();
         var uuid = Text("VolumeUUID");
+        if (uuid.Length == 0) uuid = Text("DiskUUID");
         if (!mount.StartsWith("/Volumes/", StringComparison.Ordinal) || mount[9..].Length == 0 || mount[9..].Contains('/') || mount[9..] is "." or "..") throw new IOException("Select a mounted SD card under /Volumes.");
         if (!Regex.IsMatch(device, "^disk[0-9]+(?:s[0-9]+)*$", RegexOptions.CultureInvariant)) throw new IOException("The disk identifier is not recognised.");
-        if (Text("VirtualOrPhysical") != "Physical" || !(Flag("Internal") == false || Flag("RemovableMedia") == true)) throw new IOException("Only an external or removable physical SD card can be updated.");
-        if (Flag("ReadOnlyVolume") != false || Flag("ReadOnlyMedia") != false) throw new IOException("The SD card is read-only or its write status is unknown.");
+        if (Text("VirtualOrPhysical") == "Virtual" || Flag("SystemImage") == true || Text("BusProtocol") == "Disk Image" || !(Flag("Internal") == false || Flag("RemovableMedia") == true || Flag("RemovableMediaOrExternalDevice") == true)) throw new IOException("Only an external or removable physical SD card can be updated.");
+        if (Flag("WritableVolume") != true || Flag("WritableMedia") != true) throw new IOException("The SD card is read-only or its write status is unknown.");
         if (fs is not ("msdos" or "exfat")) throw new IOException("The SD card must already use FAT32 or exFAT.");
-        if (fs == "msdos" && !Text("FileSystemPersonality").Contains("FAT32", StringComparison.OrdinalIgnoreCase)) throw new IOException("Use a FAT32 or exFAT SD card.");
-        if (uuid.Length == 0) throw new IOException("macOS could not identify this card reliably. Reconnect it and try again.");
+        if (fs == "msdos" && !(Text("FilesystemName").Contains("FAT32", StringComparison.OrdinalIgnoreCase) || Text("FilesystemUserVisibleName").Contains("FAT32", StringComparison.OrdinalIgnoreCase))) throw new IOException("Use a FAT32 or exFAT SD card.");
         long total = Number("TotalSize"); if (total == 0) total = Number("Size");
-        long free = Number("VolumeFreeSpace");
-        if (total <= 0 || free < 0 || free > total) throw new IOException("The SD card's reported capacity is invalid.");
+        long free = Number("FreeSpace");
+        if (!fields.ContainsKey("FreeSpace") || total <= 0 || free < 0 || free > total) throw new IOException("The SD card's reported capacity is invalid.");
         return new(mount, string.IsNullOrWhiteSpace(Text("VolumeName")) ? mount[9..] : Text("VolumeName"), device, uuid, fs, total, free);
     }
     public static async Task<MacVolume> InspectAsync(string path, CancellationToken cancel = default)
@@ -55,22 +56,29 @@ public static class MacVolumes
             if (process.ExitCode != 0) throw new IOException("macOS could not read this SD card. Reconnect it and choose Refresh.");
             var volume = Parse(xml);
             if (!volume.Root.Equals(path, StringComparison.Ordinal)) throw new IOException("Choose the root of the SD card, not a subfolder.");
-            return volume;
+            var mounted = MacVolumeGuard.Read(path);
+            if (mounted.Mount != volume.Root || mounted.Device != "/dev/" + volume.Device || mounted.FileSystem != volume.FileSystem || (mounted.Flags & 1) != 0)
+                throw new IOException("The SD card mount changed. Refresh and select it again.");
+            return volume with { MountFsid = mounted.Fsid };
         }
         finally { if (!process.HasExited) process.Kill(); }
     }
-    public static async Task<MacVolume[]> ScanAsync()
+    public static async Task<MacVolume[]> ScanAsync(Action<string, string>? onRejected = null)
     {
         if (!OperatingSystem.IsMacOS() || !Directory.Exists("/Volumes")) return [];
         var volumes = new List<MacVolume>();
         foreach (var path in Directory.EnumerateDirectories("/Volumes"))
+        {
+            if (Paths.Linked(path)) continue;
             try { volumes.Add(await InspectAsync(path)); }
-            catch (Exception e) when (e is IOException or UnauthorizedAccessException or OperationCanceledException or XmlException) { }
+            catch (Exception e) when (e is IOException or UnauthorizedAccessException or OperationCanceledException or XmlException)
+            { onRejected?.Invoke(Path.GetFileName(path), e.Message); }
+        }
         return volumes.OrderBy(v => v.Name, StringComparer.OrdinalIgnoreCase).ToArray();
     }
     public static void SameCard(MacVolume expected, MacVolume actual)
     {
-        if (expected.Root != actual.Root || expected.Device != actual.Device || expected.Uuid != actual.Uuid || expected.FileSystem != actual.FileSystem || expected.TotalBytes != actual.TotalBytes)
+        if (expected.Root != actual.Root || expected.Device != actual.Device || expected.Uuid != actual.Uuid || expected.FileSystem != actual.FileSystem || expected.TotalBytes != actual.TotalBytes || expected.MountFsid != actual.MountFsid)
             throw new IOException("The selected SD card changed. Refresh and select it again.");
     }
 }

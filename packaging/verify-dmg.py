@@ -26,5 +26,11 @@ try:
     result = json.loads(report.read_text())
     assert result["started"] and result["sd_accessed"] is False
     print("Packaged app launch passed:", result)
+    host = args.reports.resolve() / "updater-host.app"
+    run("/usr/bin/ditto", app, host)
 finally:
     run("/usr/bin/hdiutil", "detach", mount)
+
+# Run outside the mounted image, exactly as an installed app does. Exercise
+# mounting, identity, signatures, staging and quarantine in an isolated copy.
+run(host / "Contents/MacOS/MagicMonkeiHATS", "--validate-update", args.dmg.resolve(), args.reports.resolve() / "update-check")

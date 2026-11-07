@@ -12,10 +12,17 @@ public sealed class AppSettings
     public static string ProtectionFile => Path.Combine(DataFolder, "preserve-paths.json");
     public static string LogPath { get; } = Path.Combine(LogFolder, "session-" + DateTime.UtcNow.ToString("yyyyMMdd-HHmmss") + "-" + Environment.ProcessId + ".log");
     static readonly object LogLock = new();
-    public string BackupFolder { get; set; } = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Documents", "Magic Monkei", "HATS Backups");
+    public static string DefaultBackupFolder => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Desktop", "HATSBackups");
+    public string BackupFolder { get; set; } = DefaultBackupFolder;
     public static AppSettings Load()
     {
-        try { return JsonSerializer.Deserialize<AppSettings>(File.ReadAllText(Path.Combine(DataFolder, "settings.json"))) ?? new(); }
+        try
+        {
+            var settings = JsonSerializer.Deserialize<AppSettings>(File.ReadAllText(Path.Combine(DataFolder, "settings.json"))) ?? new();
+            var oldDefault = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Documents", "Magic Monkei", "HATS Backups");
+            if (string.IsNullOrWhiteSpace(settings.BackupFolder) || settings.BackupFolder == oldDefault) settings.BackupFolder = DefaultBackupFolder;
+            return settings;
+        }
         catch(Exception e) when(e is IOException or JsonException or UnauthorizedAccessException) { return new(); }
     }
     public void Save() { Directory.CreateDirectory(DataFolder); File.WriteAllText(Path.Combine(DataFolder, "settings.json"), JsonSerializer.Serialize(this)); }
