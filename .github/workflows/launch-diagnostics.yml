@@ -1,0 +1,32 @@
+name: Check published app through Finder
+on:
+  push:
+    branches: [fix/macos-finder-launch]
+    paths: ['packaging/check-finder-launch.py', '.github/workflows/launch-diagnostics.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  launch:
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [macos-15, macos-15-intel]
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download the published 2.3.1 DMG
+        run: |
+          curl --fail --location --output "$RUNNER_TEMP/HATS.dmg" https://github.com/TechRepairs4U/Hats-App-Mac/releases/download/macos-v2.3.1/Magic-Monkei-HATS-Universal.dmg
+          echo "4e2cec1414d2422715c1e7f547b4a3a31cbb65ddc3dc2cb5da82d82f4436fb35  $RUNNER_TEMP/HATS.dmg" | shasum -a 256 -c -
+      - name: Open mounted and installed app through LaunchServices
+        run: python3 packaging/check-finder-launch.py "$RUNNER_TEMP/HATS.dmg" "$RUNNER_TEMP/launch-reports"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: finder-launch-${{ matrix.runner }}
+          path: |
+            ${{ runner.temp }}/launch-reports/*.json
+            ${{ runner.temp }}/launch-reports/*.log
+          retention-days: 14
