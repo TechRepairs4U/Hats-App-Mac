@@ -124,10 +124,10 @@ public sealed class MainWindow : Window
         if(scanning||busy)return;scanning=true;Controls();
         try
         {
-            var selected=drives.SelectedItem as MacVolume;var found=await MacVolumes.ScanAsync();if(closed)return;
-            drives.ItemsSource=found;drives.SelectedItem=found.FirstOrDefault(v=>v.Root==selected?.Root&&v.Uuid==selected.Uuid&&v.Device==selected.Device);
+            var selected=drives.SelectedItem as MacVolume;var rejected=new List<string>();var found=await MacVolumes.ScanAsync((name,reason)=>rejected.Add($"{name}: {reason}"));if(closed)return;
+            drives.ItemsSource=found;drives.SelectedItem=found.FirstOrDefault(v=>v.Root==selected?.Root&&v.Uuid==selected.Uuid&&v.Device==selected.Device&&v.MountFsid==selected.MountFsid);
             if(!scannedOnce&&selected==null&&found.Length==1)drives.SelectedIndex=0;scannedOnce=true;
-            if(drives.SelectedItem==null)driveDetail.Text=found.Length==0?"Connect an SD card formatted as FAT32 or exFAT, then Refresh.":"Choose the card you want to update.";
+            if(drives.SelectedItem==null)driveDetail.Text=found.Length==0?(rejected.Count==0?"Connect an SD card formatted as FAT32 or exFAT, then Refresh.":"No supported SD card found. "+rejected[0]):"Choose the card you want to update.";
             var summary=string.Join("; ",found.Select(v=>v+" ("+v.Root+")"));if(announce||summary!=lastDriveSummary)Log(found.Length==0?"No supported removable SD cards found.":"Detected: "+summary);lastDriveSummary=summary;
         }
         catch(Exception error){Error(error);}finally{scanning=false;Controls();}
