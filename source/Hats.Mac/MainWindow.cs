@@ -99,7 +99,7 @@ public sealed class MainWindow : Window
     async Task Scan()
     {
         if(scanning||busy)return;scanning=true;Controls();
-        try{var selected=drives.SelectedItem as MacVolume;var found=await MacVolumes.ScanAsync();if(closed)return;drives.ItemsSource=found;drives.SelectedItem=found.FirstOrDefault(v=>v.Root==selected?.Root&&v.Uuid==selected.Uuid);if(drives.SelectedItem==null)driveDetail.Text=found.Length==0?"Connect an SD card formatted as FAT32 or exFAT, then Refresh.":"Choose the card you want to update.";}
+        try{var selected=drives.SelectedItem as MacVolume;var rejected=new List<string>();var found=await MacVolumes.ScanAsync((name,reason)=>rejected.Add($"{name}: {reason}"));if(closed)return;drives.ItemsSource=found;drives.SelectedItem=found.FirstOrDefault(v=>v.Root==selected?.Root&&v.Uuid==selected.Uuid&&v.MountFsid==selected.MountFsid);if(drives.SelectedItem==null)driveDetail.Text=found.Length==0?(rejected.Count==0?"Connect an SD card formatted as FAT32 or exFAT, then Refresh.":"No supported SD card found. "+rejected[0]):"Choose the card you want to update.";}
         catch(Exception error){Error(error);}finally{scanning=false;Controls();}
     }
     async Task Fetch()
