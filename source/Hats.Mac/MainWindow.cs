@@ -109,7 +109,7 @@ public sealed class MainWindow : Window
         drives.ItemsSource=new[]{new MacVolume("/Volumes/SWITCH","SWITCH","disk4s1","preview","msdos",128L<<30,76L<<30)};drives.SelectedIndex=0;
         packs.ItemsSource=new[]{new PackAsset(1,"HATS.MM.zip","https://github.com/TechRepairs4U/HATS/releases",217676363,null,"")};packs.SelectedIndex=0;
         releaseTitle.Text="HATS 23.0.1";releaseDetail.Text="3 ZIP packs available · Checked 05:27";status.Text="Choose a drive and a pack to begin.";install.IsEnabled=false;
-        PreviewLog("HATS Installer 2.3.0 started on macOS.");PreviewLog("SD card detected: SWITCH · FAT32 · 128 GB");PreviewLog("Latest HATS release loaded. Ready when you are.");
+        PreviewLog("HATS Installer 2.3.1 started on macOS.");PreviewLog("SD card detected: SWITCH · FAT32 · 128 GB");PreviewLog("Latest HATS release loaded. Ready when you are.");
     }
     public void PreviewLog(string message){if(!PreviewMode)throw new InvalidOperationException();AppendLog(message);}
     void Controls(){var locked=busy||dialogOpen||checkingUpdate;install.IsEnabled=!PreviewMode&&!locked&&!scanning&&!fetching&&release!=null&&drives.SelectedItem is MacVolume&&packs.SelectedItem is PackAsset;drives.IsEnabled=packs.IsEnabled=options.IsEnabled=info.IsEnabled=!locked;refreshDrive.IsEnabled=!locked&&!scanning;refreshRelease.IsEnabled=!locked&&!fetching;}

@@ -1,4 +1,4 @@
-MAGIC MONKEI HATS — macOS 2.3.0
+MAGIC MONKEI HATS — macOS 2.3.1
 
 One app for Apple Silicon (M-series) and Intel Macs running macOS 14 or later.
 The .NET runtime is included. Python and .NET do not need to be installed.

@@ -1,9 +1,9 @@
-# Magic Monkei HATS for macOS 2.3.0
+# Magic Monkei HATS for macOS 2.3.1
 
 Compact C# desktop app for Apple Silicon and Intel Macs. One universal DMG contains one app with both native runtimes; macOS selects the correct architecture automatically. Requires macOS 14 or later. Python and .NET are bundled dependencies only where needed during development; users do not need either installed.
 
 
-Version 2.3.0 matches the compact Windows layout: a complete header logo,
+Version 2.3.1 fixes detection of mounted FAT32 and exFAT cards. Version 2.3.0 introduced the compact Windows layout: a complete header logo,
 Options and Info beside Install HATS, and an always-open log that expands with
 the window and follows new entries after layout. Backups default to Desktop/HATSBackups.
 The removed Options screens stay removed; automatic data protection still runs.
