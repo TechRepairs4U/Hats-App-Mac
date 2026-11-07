@@ -4,6 +4,7 @@ on:
     branches: [main]
     paths: ['source/**', 'packaging/**', '.github/workflows/macos-build.yml', 'INSTALL.txt']
   pull_request:
+    branches: [main]
     paths: ['source/**', 'packaging/**', '.github/workflows/macos-build.yml', 'INSTALL.txt']
   workflow_dispatch:
 permissions:
